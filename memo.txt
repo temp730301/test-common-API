@@ -1,0 +1,70 @@
+sudo apt install cmake cmake-qt-gui libexpat-dev expat default-jre git g++
+sudo apt install libboost-dev libboost-tools-dev libboost-system-dev libboost-thread-dev libboost-filesystem-dev
+
+cd
+wget https://github.com/COVESA/capicxx-core-tools/releases/download/3.2.0.1/commonapi_core_generator.zip
+wget https://github.com/COVESA/capicxx-someip-tools/releases/download/3.2.0.1/commonapi_someip_generator.zip
+unzip commonapi_core_generator.zip -d ~/commonapi_core_generator
+unzip commonapi_someip_generator.zip -d ~/commonapi_someip_generator
+chmod +x ~/commonapi_core_generator/commonapi-core-generator-linux-x86_64
+chmod +x ~/commonapi_someip_generator/commonapi-someip-generator-linux-x86_64
+
+cd
+git clone https://github.com/GENIVI/capicxx-core-runtime.git
+cd capicxx-core-runtime/
+mkdir build
+cd build
+cmake ..
+make
+
+cd
+git clone https://github.com/GENIVI/capicxx-someip-runtime.git
+git clone https://github.com/GENIVI/vsomeip.git
+
+cd vsomeip
+mkdir build
+cd build
+cmake -DENABLE_SIGNAL_HANDLING=1 -DDIAGNOSIS_ADDRESS=0x10 ..
+make
+
+cd
+cd capicxx-someip-runtime
+mkdir build
+cd build
+cmake -DUSE_INSTALLED_COMMONAPI=OFF ..
+make
+
+[make ini]
+<
+/etc/commonapi.ini
+[default]
+binding=someip
+
+[logging]
+console = true
+file = ./mylog.log
+dlt = false
+level = verbose
+>
+
+[generate fidl/fdepl]
+<
+*HelloWorld.fdepl
+x define org.genivi.commonapi.someip.deployment for provider MyService {
+o define org.genivi.commonapi.someip.deployment for provider as MyService {
+https://githubmemory.com/repo/GENIVI/capicxx-someip-tools/issues/17
+This *StubDefault.cpp files are no longer generated with CommonAPI 3.2. The stub implementation is header-only now.
+>
+
+cd
+cd project
+~/commonapi_core_generator/commonapi-core-generator-linux-x86_64 -sk ./fidl/HelloWorld.fidl
+~/commonapi_someip_generator/commonapi-someip-generator-linux-x86_64 ./fidl/HelloWorld.fdepl
+
+
+export LD_LIBRARY_PATH=/home/m/capicxx-core-runtime/build:/home/m/capicxx-someip-runtime/build:/home/m/vsomeip/build:$LD_LIBRARY_PATH
+
+/home/m/capicxx-core-runtime/build
+/home/m/capicxx-someip-runtime/build
+/home/m/vsomeip/build
+
